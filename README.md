@@ -12,4 +12,4 @@ Program defautly output phylogenetic trees and corresponding neighbour gene anno
 
     # query KEGG annotation of neighbour gene of GMGC cluster 001_754_949 with biome annotations
 
-    python gmgfam_ply.py --cluster 001_754_949 --notation KEGG --nside 10 --biome
+    python gmgfam_plot.py --cluster 001_754_949 --notation KEGG --nside 10 --biome
