@@ -5,19 +5,11 @@ from json import dump, dumps
 import numpy as np
 import operator
 import pandas as pd
-<<<<<<< HEAD
-#import pickle # python version >= 3.7
-try:
-    import pickle5 as pickle # python version < 3.7
-except ImportError:
-    import pickle # python version >= 3.7
-=======
 #import pickle
 try:
     import pickle5 as pickle # for py < 3.8
 except ImportError:
-	import pickle
->>>>>>> 484288f4a0eafc8a6337a2034fa01242b9d796ee
+	import pickle # for py >= 3.8 or on cbgo cluster
 
 from pymongo import MongoClient
 import sys, os
