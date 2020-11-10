@@ -1,5 +1,5 @@
 {
-"MONGO_HOST":"fat01"
+"MONGO_HOST":"10.0.3.1"
 ,
 "MONGO_PORT":27017
 }
