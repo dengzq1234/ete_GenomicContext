@@ -26,6 +26,24 @@ from get_context import (launch_analysis,
                             Unigene2Trembl, 
                             Unigene2Emapper)
 
+biome_keys= [
+                #'am',
+                #'iso',
+                'bu',
+                'was',
+                'soil',
+                'mar',
+                'fw',
+                'pig',
+                'cat',
+                'dog',
+                'mous',
+                'gut',
+                'or',
+                'nos',
+                'skin',
+                'vag'
+            ]
 
 def get_operons_from_json(inputfile):
     with open(inputfile, "r") as handler:
@@ -138,122 +156,135 @@ def layout(node):
         colidx = 0
 
         # for gradient
-        if gene2trembl[name]:
-            ident_trembl = gene2trembl[name][1]
-            color_idx = int(ident_trembl*10)
-            color = redgradient[color_idx]
+        if gene2trembl:
+            if gene2trembl[name]:
+                ident_trembl = gene2trembl[name][1]
+                color_idx = int(ident_trembl*10)
+                color = redgradient[color_idx]
 
 
-            identF = TextFace("%.1f" % (ident_trembl*100), fgcolor="black")
-            identF.background.color = color
-            add_face_to_node(identF, node, column=colidx, position="aligned")
-            identF.margin_left = SPACER
-            colidx += 1
+                identF = TextFace("%.1f" % (ident_trembl*100), fgcolor="black")
+                identF.background.color = color
+                add_face_to_node(identF, node, column=colidx, position="aligned")
+                identF.margin_left = SPACER
+                colidx += 1
 
-            hitF = TextFace(gene2trembl[name][0])        
-            add_face_to_node(hitF, node, column=colidx, position="aligned")
-            hitF.margin_left= SPACER
-            colidx += 1
-        else:
-            ident_trembl = 0
-            color_idx = int(ident_trembl)
-            color = redgradient[color_idx]
+                hitF = TextFace(gene2trembl[name][0])        
+                add_face_to_node(hitF, node, column=colidx, position="aligned")
+                hitF.margin_left= SPACER
+                colidx += 1
+            else:
+                ident_trembl = 0
+                color_idx = int(ident_trembl)
+                color = redgradient[color_idx]
 
 
-            identF = TextFace(ident_trembl, fgcolor="black")
-            identF.background.color = color
-            add_face_to_node(identF, node, column=colidx, position="aligned")
-            identF.margin_left = SPACER
-            colidx += 1
+                identF = TextFace(ident_trembl, fgcolor="black")
+                identF.background.color = color
+                add_face_to_node(identF, node, column=colidx, position="aligned")
+                identF.margin_left = SPACER
+                colidx += 1
 
-            hitF = TextFace(" ") #gene2trembl[name]
-            add_face_to_node(hitF, node, column=colidx, position="aligned")
-            hitF.margin_left= SPACER
-            colidx += 1
+                hitF = TextFace(" ") #gene2trembl[name]
+                add_face_to_node(hitF, node, column=colidx, position="aligned")
+                hitF.margin_left= SPACER
+                colidx += 1
+
+            if 0 < ident_trembl < 0.95:
+                color_name = "SteelBlue"
+            elif ident_trembl == 0:
+                color_name = "#8B0000"
+            else: 
+                color_name = "#333333"
+                #name = gene2trembl[name][0]
+            nameF =  TextFace(name, fgcolor=color_name)
+            add_face_to_node(nameF, node, column=0, position="branch-right")
+
 
         # emapper annotation
-        
-        if gene2emapper[name]:
-            emapperF = TextFace(gene2emapper[name][0])
-            add_face_to_node(emapperF, node, column=colidx, position="aligned")
-            emapperF.margin_left= SPACER
-            colidx +=1
+        if gene2emapper:
+            if gene2emapper[name]:
+                emapperF = TextFace(gene2emapper[name][0])
+                add_face_to_node(emapperF, node, column=colidx, position="aligned")
+                emapperF.margin_left= SPACER
+                colidx +=1
 
-            if gene2emapper[name][1] != "NA|NA|NA":
-                ogsF = TextFace(gene2emapper[name][1])
+                if gene2emapper[name][1] != "NA|NA|NA":
+                    ogsF = TextFace(gene2emapper[name][1])
+                else:
+                    ogsF = TextFace(gene2emapper[name][2])
+                add_face_to_node(ogsF, node, column=colidx, position="aligned")
+                ogsF.margin_left= SPACER
+                colidx +=1
+
             else:
-                ogsF = TextFace(gene2emapper[name][2])
-            add_face_to_node(ogsF, node, column=colidx, position="aligned")
-            ogsF.margin_left= SPACER
-            colidx +=1
+                emapperF = TextFace(" ")
+                add_face_to_node(emapperF, node, column=colidx, position="aligned")
+                emapperF.margin_left= SPACER
+                colidx +=1
 
-        else:
-            emapperF = TextFace(" ")
-            add_face_to_node(emapperF, node, column=colidx, position="aligned")
-            emapperF.margin_left= SPACER
-            colidx +=1
-
-            ogsF = TextFace(" ")
-            add_face_to_node(ogsF, node, column=colidx, position="aligned")
-            ogsF.margin_left= SPACER
-            colidx +=1
+                ogsF = TextFace(" ")
+                add_face_to_node(ogsF, node, column=colidx, position="aligned")
+                ogsF.margin_left= SPACER
+                colidx +=1
         
 
         # set space for taxa
-        
-        if gene2taxa[name]:
-            taxaF = TextFace(gene2taxa[name][2])
-            add_face_to_node(taxaF, node, column=colidx, position="aligned")
-            taxaF.margin_left= SPACER
-            colidx +=1
-        else:
-            taxaF = TextFace(" ")
-            add_face_to_node(taxaF, node, column=colidx, position="aligned")
-            taxaF.margin_left= SPACER
-            colidx +=1
+        if gene2taxa:
+            if gene2taxa[name]:
+                taxaF = TextFace(gene2taxa[name][2])
+                add_face_to_node(taxaF, node, column=colidx, position="aligned")
+                taxaF.margin_left= SPACER
+                colidx +=1
+            else:
+                taxaF = TextFace(" ")
+                add_face_to_node(taxaF, node, column=colidx, position="aligned")
+                taxaF.margin_left= SPACER
+                colidx +=1
         
 
         # set color of biome distribution
-        biome_keys= [
-                #'am',
-                #'iso',
-                'bu',
-                'was',
-                'soil',
-                'mar',
-                'fw',
-                'pig',
-                'cat',
-                'dog',
-                'mous',
-                'gut',
-                'or',
-                'nos',
-                'skin',
-                'vag'
-            ]
-        colors = random_color(num=len(biome_keys), l=0.5, s=0.35, h=60)
-        biome2color = {biome:colors[i] for i, biome in enumerate(biome_keys)}
-        biome2face = {}
-        for b in biome_keys: 
-            biome2face[b] = RectFace(5, 10, fgcolor=biome2color[b], bgcolor=biome2color[b])
-        biome2face["white"] = RectFace(5, 10, fgcolor="white", bgcolor="white")
+        if gene2biomes:
+            biome_keys= [
+                    #'am',
+                    #'iso',
+                    'bu',
+                    'was',
+                    'soil',
+                    'mar',
+                    'fw',
+                    'pig',
+                    'cat',
+                    'dog',
+                    'mous',
+                    'gut',
+                    'or',
+                    'nos',
+                    'skin',
+                    'vag'
+                ]
+            colors = random_color(num=len(biome_keys), l=0.5, s=0.35, h=60)
+            biome2color = {biome:colors[i] for i, biome in enumerate(biome_keys)}
+            biome2face = {}
+            for b in biome_keys: 
+                biome2face[b] = RectFace(5, 10, fgcolor=biome2color[b], bgcolor=biome2color[b])
+            biome2face["white"] = RectFace(5, 10, fgcolor="white", bgcolor="white")
 
-        for i, b in enumerate(biome_keys):
-            if gene2biomes[name] and (gene2biomes[name][i] > 0):
-                #print(gene2biomes[name])
-                paF = TextFace(gene2biomes[name][i], fsize=9, ftype="Courier", fgcolor = "white" )
-                paF.background.color = biome2color[b]
-            else: 
-                paF = TextFace("  ", fsize=9, ftype="Courier", fgcolor = "white" )
-                paF.background.color = "#D3D3D3"
+            for i, b in enumerate(biome_keys):
+                if gene2biomes[name] and (gene2biomes[name][i] > 0):
+                    #print(gene2biomes[name])
+                    paF = TextFace(gene2biomes[name][i], fsize=9, ftype="Courier", fgcolor = "white" )
+                    paF.background.color = biome2color[b]
+                else: 
+                    paF = TextFace("  ", fsize=9, ftype="Courier", fgcolor = "white" )
+                    paF.background.color = "#D3D3D3"
 
-            paF.margin_left = 1
-            paF.margin_right = 2
-            #paF.border.color = "black"
+                paF.margin_left = 1
+                paF.margin_right = 2
+                #paF.border.color = "black"
 
-            add_face_to_node(paF, node, colidx, position="aligned")        
-            colidx +=1 
+                add_face_to_node(paF, node, colidx, position="aligned")        
+                colidx +=1 
         
         # not integrate algnment yet
         # seqF = SeqMotifFace(alg.get_seq(node.name), seq_format="compactseq", scale_factor=0.2)      
@@ -282,29 +313,23 @@ def layout(node):
                     #                  column=pos+nside, position="aligned")
                     add_face_to_node(geneFace, node,
                                      column=colidx+pos+nside, position="aligned")
-                
-        if 0 < ident_trembl < 0.95:
-            color_name = "SteelBlue"
-        elif ident_trembl == 0:
-            color_name = "#8B0000"
-        else: 
-            color_name = "#333333"
-            name = gene2trembl[name][0]
 
-        nameF =  TextFace(name, fgcolor=color_name)
-        add_face_to_node(nameF, node, column=0, position="branch-right")
+        
+        
 
     add_face_to_node(distF, node, column=0, position="branch-top")
     return
 
 def style_tree(ts, unique_notation, palette=False):
     ts.show_branch_support = True
-    ts.show_leaf_name = False
+    ts.show_leaf_name = True
     ts.branch_vertical_margin = 10
     ts.show_scale = True
     
     #ts.layout_fn = arrow_layout
     ts.layout_fn = layout
+
+    # add neigh legend
     if palette:
         ts.legend.add_face(TextFace("\t\t\t\t", fsize=12), column=0)
         ts.legend.add_face(TextFace(notation + " legend", fsize=12), column=1)
@@ -341,7 +366,12 @@ def arg_parser():
                         help="Functional notation. E.g. KEGG, eggNOG...")
     parser.add_argument('--level', type=str, help="Level to specify in \
                                     certain notation. E.g. eggNOG, level 2")
-
+    
+    parser.add_argument('--trembl', action='store_true', help="Provide TrEMBL scanning information")
+    parser.add_argument('--eggnog', action='store_true', help="Provide eggnog annotations")
+    parser.add_argument('--taxa', action='store_true', help="Provide taxa annotations")
+    parser.add_argument('--biome', action='store_true', help="Provide biome distribution information")
+    
     args = parser.parse_args()
     return args
 
@@ -368,6 +398,7 @@ def main():
         output_file = args.output
     else:
         output_file = "results/" + cluster + "_GeCo"
+    
 
     colors_file = "colors.txt"
 
@@ -388,22 +419,32 @@ def main():
     unique_notation = get_unique_notation(operons, notation, level)
     palette = get_palette(colors_file, list(unique_notation.keys()))
 
+    
+    # get taxa, biomes, trembl, eggnog annotation
+    global gene2taxa, gene2biomes, gene2trembl, gene2emapper
+
     # get cluster members
     gmgcfam_clm = Cluster2Members(cluster)
 
-    # get taxa, biomes, trembl, eggnog annotation
-    global gene2taxa, gene2biomes, gene2trembl, gene2emapper
     gene2taxa = {}
     gene2biomes = {}
     gene2trembl = {}
     gene2emapper = {}
-    for unigene in gmgcfam_clm:
-        gene2taxa[unigene] = Unigene2Taxa(unigene)
-        gene2biomes[unigene] = Unigene2Biome(unigene)
-        gene2trembl[unigene] = Unigene2Trembl(unigene)
-        gene2emapper[unigene] = Unigene2Emapper(unigene)
+    if args.trembl:
+        for unigene in gmgcfam_clm:
+            gene2trembl[unigene] = Unigene2Trembl(unigene)
+    if args.eggnog:
+        for unigene in gmgcfam_clm:
+            gene2emapper[unigene] = Unigene2Emapper(unigene)
+    if args.taxa:
+        for unigene in gmgcfam_clm:
+            gene2taxa[unigene] = Unigene2Taxa(unigene)
+    if args.biome:
+        for unigene in gmgcfam_clm:
+            gene2biomes[unigene] = Unigene2Biome(unigene)
 
     # get cluster family tree and alignment
+    #print(gene2trembl,gene2emapper, gene2taxa, gene2biomes)
     gmgcfam_nw, gmgcfam_aln = Cluster2TreeAlg(cluster)
 
     # build tree with set style
@@ -417,6 +458,52 @@ def main():
         t.set_outgroup(t.get_midpoint_outgroup())
     except:
         pass
+    
+    # add headers
+    hidx = 0
+    
+    # for h in ["%Identity",  "Trembl_bestHit", "Predicted_gene", "MatchOGs", "Closest taxa (prediction)"]:
+        # f = TextFace(h, fsize=10, fgcolor="#333333", fstyle="underline")
+        # f.margin_left = SPACER
+        # ts.aligned_header.add_face(f, column=hidx)
+        # hidx += 1
+
+    if args.trembl:
+        for h in ["%Identity",  "Trembl_bestHit"]:
+            f = TextFace(h, fsize=10, fgcolor="#333333", fstyle="underline")
+            f.margin_left = SPACER
+            ts.aligned_header.add_face(f, column=hidx)
+            hidx += 1
+    
+    if args.eggnog:
+        for h in ["Predicted_gene", "MatchOGs"]:
+            f = TextFace(h, fsize=10, fgcolor="#333333", fstyle="underline")
+            f.margin_left = SPACER
+            ts.aligned_header.add_face(f, column=hidx)
+            hidx += 1
+    if args.taxa:
+        for h in ["Closest taxa (prediction)"]:
+            f = TextFace(h, fsize=10, fgcolor="#333333", fstyle="underline")
+            f.margin_left = SPACER
+            ts.aligned_header.add_face(f, column=hidx)
+            hidx += 1
+    if args.biome:
+        for h in biome_keys:
+            f = TextFace(h, fsize=10, fgcolor="#333333")
+            f.margin_right = 2
+            f.margin_left = 1
+            f.margin_left = 2
+
+            ts.aligned_header.add_face(f, column=hidx)
+
+            hidx += 1
+
+    # if args.notation: 
+    #     for h in ["neigh {} annotation".format(notation)]:
+    #         f = TextFace(h, fsize=10, fgcolor="#333333", fstyle="underline")
+    #         f.margin_left = 1
+    #         ts.aligned_header.add_face(f, column=hidx+nside)
+    #         hidx += 1
 
     t.render(output_file + ".png", dpi=2000, tree_style=ts)
 
