@@ -5,10 +5,26 @@ from json import dump, dumps
 import numpy as np
 import operator
 import pandas as pd
-import pickle
+#import pickle
+import pickle5 as pickle # for py < 3.8
 from pymongo import MongoClient
 import sys, os
+import json
 
+MONGO_CONFIG = "mongo.cnf"
+
+def load_mongo_config(config_fn):
+        host = None
+        port = None
+        with open(config_fn, 'r') as mongo_config:
+                config_data = json.load(mongo_config)
+                if "MONGO_HOST" in config_data:
+                        host = config_data["MONGO_HOST"]
+                if "MONGO_PORT" in config_data:
+                        port = config_data["MONGO_PORT"]
+
+        #sys.stderr.write("gmgc_mongodb "+str(host)+":"+str(port)+"\n")
+        return host, port
 
 def mongo_connect():
     """
@@ -18,7 +34,8 @@ def mongo_connect():
     # global coll_clusters
     db = None
     if not db:
-            client = MongoClient('10.0.3.1', 27017, maxPoolSize=10)
+            MONGO_HOST, MONGO_PORT = load_mongo_config(MONGO_CONFIG)
+            client = MongoClient(MONGO_HOST, MONGO_PORT, maxPoolSize=10)
             db = client.gmgc_unigenes
             coll_unigene = db.neighbour
             coll_cluster = db.emapper_v2
@@ -767,6 +784,220 @@ def launch_analysis(query, n_range, cutoff, cluster=True):
     return analysis
 
 
+def Cluster2TreeAlg(ClusterID):
+    global client
+    client = mongo_connect()[0]
+
+    query = {'filename':ClusterID}
+    db_tree = None
+    db_alg = None
+    if not db_tree or db_alg:
+        
+        #client = connectdb(MONGO_HOST, MONGO_PORT)
+        db_tree = client.trees
+        db_alg = client.alignments
+
+        #db_tree = client.sample_trees
+        #db_alg = client.sample_alignments
+
+        fs_tree = gridfs.GridFS(db_tree)    
+        fs_alg = gridfs.GridFS(db_alg)
+
+        one_tree = fs_tree.find_one(query)
+        one_alg = fs_alg.find_one(query)
+
+        if one_tree and one_alg:
+            tree_result = one_tree.read().decode("utf-8")
+            alignment_result = one_alg.read().decode("utf-8")
+        else:
+            sys.stderr.write("Cannot find information of {} in gmgfam database, try to retrieve cluster info in gmgc database...\n".format(ClusterID))
+            new_query_ID = Unigene2Cluster(ClusterID)
+            if new_query_ID:
+                sys.stderr.write("{} belongs to {} cluster family\n".format(ClusterID, new_query_ID))
+                new_query = {"filename": new_query_ID}
+
+
+                one_tree = fs_tree.find_one(new_query)
+                one_alg = fs_alg.find_one(new_query)
+
+                if one_tree and one_alg:
+                    tree_result = one_tree.read().decode("utf-8")
+                    alignment_result = one_alg.read().decode("utf-8")
+
+                else:
+                    raise TypeError("No {} nor {} information is found".format(ClusterID, new_query_ID))
+            else:
+                raise TypeError("No {} nor {} information is found".format(ClusterID, new_query_ID))
+
+    return tree_result, alignment_result
+
+def Unigene2Cluster(checkID):
+    global client
+    client = mongo_connect()[0]
+
+    query = {"u":checkID}
+
+    coll_unigene2cluster = client.gmgc_unigenes.clusters
+    if coll_unigene2cluster.find_one(query):
+        NewClusterID = coll_unigene2cluster.find_one(query)['cl']
+    else:
+        return None
+
+    return NewClusterID
+
+# get unigene members of cluster family
+def Cluster2Members(ClusterID):
+    global client
+    client = mongo_connect()[0]
+
+    query = {"cl":ClusterID}
+    
+    try:
+        coll_members = client.gmgc_clusters.members
+    except AttributeError:
+        return [ClusterID]
+    
+    members = coll_members.find_one(query)
+    if not members:
+        sys.stderr.write("Cannot find information of {} in gmgfam database, try to retrieve cluster info in gmgc database...\n".format(ClusterID))
+        new_query_ID = Unigene2Cluster(ClusterID)
+        if new_query_ID:
+            sys.stderr.write("{} belongs to {} cluster family\n".format(ClusterID, new_query_ID))
+            new_query = {"cl": new_query_ID}
+            members = coll_members.find_one(new_query)
+        else:
+            raise TypeError("No {} nor {} information is found".format(ClusterID, new_query_ID))
+    
+    if "clm" in members.keys():
+        members_clm = []
+        members_clm = members["clm"]
+    else:
+        members_clm = ''
+    return members_clm
+
+# get taxa annotation
+def Unigene2Taxa(UnigeneID):
+    global client
+    client = mongo_connect()[0]
+
+    query = {'u': UnigeneID}
+    
+    coll_taxa = client.gmgc_unigenes.taxo_map
+    
+    taxa = coll_taxa.find_one(query)
+    if taxa:
+        if "_id" in taxa:
+            del taxa["_id"]
+    else:
+        return ''
+    taxa_result = []
+    taxa_result = [taxa["txid"], taxa["r"], taxa["n"]]
+    
+    return taxa_result
+
+# get biomes annotation
+def Unigene2Biome(UnigeneID):
+    global client, biome_keys 
+    client = mongo_connect()[0]
+
+    query = {"u": UnigeneID}
+    
+    coll_biome = client.gmgc_unigenes.gene_count
+    
+    biome = coll_biome.find_one(query)
+
+    biome_keys= [
+        #'am',
+        #'iso',
+        'bu',
+        'was',
+        'soil',
+        'mar',
+        'fw',
+        'pig',
+        'cat',
+        'dog',
+        'mous',
+        'gut',
+        'or',
+        'nos',
+        'skin',
+        'vag'
+    ]
+
+    if biome:
+        biome_result = []
+        biome_result = [ biome[key] for key in biome_keys]
+    else:
+        biome_result = ''
+    
+    return biome_result
+
+# get sprot annotation
+def Unigene2Sprot(UnigeneID):
+    global client
+    client = mongo_connect()[0]
+
+    query = {"u": UnigeneID}
+    
+    coll_sprotbest = client.gmgc_unigenes.sprot_best
+    coll_sprotexact = client.gmgc_unigenes.sprot_exact
+    
+    sprotexact = coll_sprotexact.find_one(query)
+    sprotbest = coll_sprotbest.find_one(query)
+    
+    
+    sprot_result = []
+    if sprotexact:
+        sprot_result.append(sprotexact['spe'])
+    else:
+        sprot_result.append('')
+    
+    if sprotbest:
+        sprot_result.append(sprotbest['spb']['n'])
+        sprot_result.append(sprotbest['spb']['pi']) # ID%
+        sprot_result.append(sprotbest['spb']['qc'])
+        sprot_result.append(sprotbest['spb']['tc'])
+    else:
+        return None
+    return sprot_result
+
+# get trembl annotation
+def Unigene2Trembl(UnigeneID):
+    global client
+    client = mongo_connect()[0]
+
+    query = {"u": UnigeneID}
+    coll_tremblbest = client.gmgc_unigenes.trembl_best
+    
+    tremblbest = coll_tremblbest.find_one(query)
+    
+    trembl_result = []
+    if tremblbest:
+        trembl_result.append(tremblbest['trb']['n'])
+        trembl_result.append(tremblbest['trb']['pi']) # ID%
+        trembl_result.append(tremblbest['trb']['qc'])
+        trembl_result.append(tremblbest['trb']['tc'])
+    else:
+        return None
+    
+    return trembl_result
+
+# get eggnog annotation
+def Unigene2Emapper(unigeneID):
+    global client
+    client = mongo_connect()[0]
+
+    query = {"u": unigeneID}
+    coll_emapper = client.gmgc_unigenes.emapper_v2
+    emapper = coll_emapper.find_one(query)
+    
+    emapper_result = []
+    if emapper:
+        emapper_result.append(emapper['p_n'])
+        emapper_result.append(emapper['bOGs'])
+        emapper_result.append(emapper['OGs'])
+    return emapper_result
 
 def main():
     ### Arguments

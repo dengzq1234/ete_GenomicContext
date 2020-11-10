@@ -125,7 +125,6 @@ def arg_parser():
                         help="Functional notation. E.g. KEGG, eggNOG...")
     parser.add_argument('--level', type=str, help="Level to specify in \
                                     certain notation. E.g. eggNOG, level 2")
-
     args = parser.parse_args()
     return args
 
@@ -134,7 +133,7 @@ def main():
 
     args = arg_parser()
     cluster = args.cluster
-    cluster = "001_754_949"
+    #cluster = "001_754_949"
     if args.operons:
         operon_file = args.operons
     else:
@@ -144,6 +143,7 @@ def main():
         tree_file = args.tree
     else:
         tree_file = "data/" + cluster + "_newick.txt"
+
     if args.output:
         output_file = args.output
     else:
@@ -158,6 +158,8 @@ def main():
         nside = 10
     notation = args.notation
     level = args.level
+
+    # chunk of neigh gene vis
     launch_analysis(cluster,
                           nside,
                           30,
@@ -170,7 +172,7 @@ def main():
     ts = TreeStyle()
     ts = style_tree(ts, unique_notation, palette)
 
-    t.render(output_file + ".png", dpi=1200, tree_style=ts)
+    t.render(output_file + "_1.png", dpi=1200, tree_style=ts)
 
 
 main()
