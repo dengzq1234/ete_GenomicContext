@@ -6,7 +6,11 @@ import numpy as np
 import operator
 import pandas as pd
 #import pickle
-import pickle5 as pickle # for py < 3.8
+try:
+    import pickle5 as pickle # for py < 3.8
+except ImportError:
+	import pickle
+
 from pymongo import MongoClient
 import sys, os
 import json
@@ -760,8 +764,8 @@ def launch_analysis(query, n_range, cutoff, cluster=True):
 
     ### KEGG pathways
     global kegg_dict, eggNOG_DICT, egg_levels
-    kegg_dict = get_pickle("static/pickle/KEGG_DESCRIPTION.pickle")
-    eggNOG_DICT = get_pickle("static/pickle/eggNOG_LEVELS.pickle")
+    kegg_dict = get_pickle("static/pickle4/KEGG_DESCRIPTION.pickle")
+    eggNOG_DICT = get_pickle("static/pickle4/eggNOG_LEVELS.pickle")
     egg_levels = {}
 
     ### Analysis
