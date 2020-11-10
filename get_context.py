@@ -39,7 +39,6 @@ def mongo_connect():
     db = None
     if not db:
             MONGO_HOST, MONGO_PORT = load_mongo_config(MONGO_CONFIG)
-            print(type(MONGO_HOST),type(MONGO_PORT))
             client = MongoClient(MONGO_HOST, MONGO_PORT, maxPoolSize=10)
             #client = MongoClient('10.0.3.1', 27017, maxPoolSize=10)
             db = client.gmgc_unigenes
