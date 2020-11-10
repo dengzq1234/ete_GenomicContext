@@ -5,8 +5,12 @@ from json import dump, dumps
 import numpy as np
 import operator
 import pandas as pd
-#import pickle
-import pickle5 as pickle # for py < 3.8
+#import pickle # python version >= 3.7
+try:
+    import pickle5 as pickle # python version < 3.7
+except ImportError:
+    import pickle # python version >= 3.7
+
 from pymongo import MongoClient
 import sys, os
 import json
@@ -35,7 +39,9 @@ def mongo_connect():
     db = None
     if not db:
             MONGO_HOST, MONGO_PORT = load_mongo_config(MONGO_CONFIG)
+            print(type(MONGO_HOST),type(MONGO_PORT))
             client = MongoClient(MONGO_HOST, MONGO_PORT, maxPoolSize=10)
+            #client = MongoClient('10.0.3.1', 27017, maxPoolSize=10)
             db = client.gmgc_unigenes
             coll_unigene = db.neighbour
             coll_cluster = db.emapper_v2
